@@ -2,6 +2,17 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from pathlib import Path
+import base64
+def local_image_to_data_url(path: str) -> str:
+    """Return a data:image/...;base64 URL for a local image file."""
+    with open(path, "rb") as f:
+        data = f.read()
+    mime = "image/png"
+    if path.lower().endswith((".jpg", ".jpeg")):
+        mime = "image/jpeg"
+    b64 = base64.b64encode(data).decode("utf-8")
+    return f"data:{mime};base64,{b64}"
+
 
 # ---------------------------
 # Small helper
@@ -28,6 +39,39 @@ st.set_page_config(
     page_icon="🏅",
     layout="wide",
 )
+# ===============================
+# Top Navigation Menu (Custom)
+# ===============================
+
+st.markdown("""
+<style>
+.navbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.nav-item {
+    padding: 8px 18px;
+    border-radius: 12px;
+    background-color: #e5e7eb;
+    color: #374151;
+    font-weight: 500;
+    text-decoration: none;
+    font-size: 15px;
+}
+.nav-item:hover {
+    background-color: #d1d5db;
+}
+.nav-active {
+    background-color: #2563eb !important;
+    color: white !important;
+}
+            
+</style>
+""", unsafe_allow_html=True)
+
+# Detect current page filename
+import os
 
 # Hide Streamlit default menu/footer if you want
 hide_menu_style = """
@@ -108,6 +152,128 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+st.markdown(
+    """
+    <style>
+    /* ---------- HERO SECTION ---------- */
+    .hero-wrapper {
+        margin-top: 0.3rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .hero {
+        position: relative;
+        width: 100%;
+        height: 380px;
+        border-radius: 18px;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        box-shadow: 0 18px 45px rgba(15,23,42,0.35);
+    }
+
+    .hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.4) 40%, rgba(15,23,42,0.05) 100%);
+        color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 24px 34px;
+    }
+
+    .hero-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .hero-logo {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+    }
+
+    .hero-logo-mark {
+        font-size: 1.4rem;
+    }
+
+    .hero-nav {
+        display: flex;
+        gap: 24px;
+    }
+
+    .hero-nav-item {
+        text-transform: lowercase;
+        letter-spacing: 0.08em;
+        font-size: 0.75rem;
+        color: #e5e7eb;
+        text-decoration: none;
+    }
+
+    .hero-nav-item-active {
+        text-decoration: underline;
+        text-underline-offset: 4px;
+    }
+
+    .hero-bottom {
+        max-width: 360px;
+    }
+
+    .hero-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 0.4rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.95rem;
+        color: #e5e7eb;
+    }
+
+    /* ---------- STICKY NAV (ICON BAR) ---------- */
+    .sticky-nav-wrapper {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        padding: 10px 0 14px 0;
+        background: #f8fafc;
+    }
+
+    .tab-bar {
+        display: inline-flex;
+        gap: 10px;
+        padding: 4px;
+        border-radius: 999px;
+        background-color: #e5e7eb;
+    }
+
+    .tab-pill {
+        padding: 6px 16px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: none;
+        background: transparent;
+        color: #334155;
+        text-decoration: none;
+    }
+
+    .tab-pill-active {
+        background-color: #1e3a8a;
+        color: #ffffff !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ---------------------------
 # Data loading
@@ -157,6 +323,55 @@ def load_data():
     return athletes, events, medals_total, nocs
 
 athletes_df, events_df, medals_total_df, nocs_df = load_data()
+# ------------------------------------------------
+# HERO SECTION (big image + simple top nav)
+# ------------------------------------------------
+# ------------------------------------------------
+# HERO SECTION (big image + simple top nav)
+# ------------------------------------------------
+BASE_DIR = Path(__file__).parent          # folder where app.py lives
+HERO_IMAGE_PATH = BASE_DIR / "utils" / "picture_oly.png"
+
+# Debug (optional): show in the terminal what path we are using
+print("Hero image path:", HERO_IMAGE_PATH, "exists:", HERO_IMAGE_PATH.exists())
+
+HERO_IMAGE_URL = local_image_to_data_url(str(HERO_IMAGE_PATH))
+
+
+
+st.markdown(
+    f"""
+    <div class="hero-wrapper">
+      <div class="hero" style="background-image: url('{HERO_IMAGE_URL}');">
+        <div class="hero-overlay">
+
+          <div class="hero-top-row">
+            <div class="hero-logo">
+              <span class="hero-logo-mark">🏅</span>
+              <span>PARIS 2024</span>
+            </div>
+
+            <div class="hero-nav">
+              <span class="hero-nav-item hero-nav-item-active">overview</span>
+              <span class="hero-nav-item">Global Analysis</span>
+              <span class="hero-nav-item">Athlete Performance</span>
+              <span class="hero-nav-item">Sports and Events</span>
+            </div>
+          </div>
+
+          <div class="hero-bottom">
+            <div class="hero-title">Paris 2024</div>
+            <div class="hero-subtitle">
+              Explore athletes, events, and medal highlights at a glance.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ---------------------------
 # Sidebar filters
