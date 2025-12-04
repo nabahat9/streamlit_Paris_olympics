@@ -7,3 +7,4 @@ pycountry
 scikit-learn
 folium
 python-dotenv
+plotly
