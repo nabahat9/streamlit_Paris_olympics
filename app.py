@@ -10,7 +10,10 @@ def local_image_to_data_url(path: str) -> str:
         with open(path, "rb") as f:
             data = f.read()
     except FileNotFoundError:
-        return "" # Return empty string if file not found
+        # NOTE: Using a static path string here for the image not found warning. 
+        # In a real app, ensure 'utils/logo.png' exists.
+        st.warning(f"Error: Image not found at {path}. Using fallback.")
+        return "" 
         
     mime = "image/png"
     if path.lower().endswith((".jpg", ".jpeg")):
@@ -51,7 +54,11 @@ st.set_page_config(
 if 'active_page' not in st.session_state:
     st.session_state.active_page = 'overview'
 
-# Hide Streamlit default menu/footer/header (includes space removal)
+# Helper function to change the page
+def nav_to(page_name):
+    st.session_state.active_page = page_name
+
+# Hide Streamlit default menu/footer/header
 hide_menu_style = """
     <style>
     #MainMenu {visibility: hidden;}
@@ -62,35 +69,90 @@ hide_menu_style = """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 
 # ---------------------------
-# Custom CSS for layout (Includes fixes for top space and full-width hero)
+# Custom CSS for layout (UPDATED: .hero-main-content removed)
 # ---------------------------
 st.markdown(
     """
     <style>
     /* --------------------------------- */
-    /* GLOBAL SPACE REMOVAL (HEADER FIX) */
+    /* TRANSPARENT FIXED NAVBAR STYLES */
+    /* --------------------------------- */
+    .fixed-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999; 
+        background-color: transparent; 
+        box-shadow: none; 
+        padding: 1rem 3rem; 
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 5rem;
+        color: #f9fafb; 
+    }
+
+    /* Navbar Links Styling */
+    .nav-links {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .nav-links a {
+        color: #ffffff; 
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+        color: #e5e7eb; 
+    }
+    
+    /* Highlight the active page link */
+    .nav-links a.active {
+        font-weight: 700;
+        border-bottom: 2px solid #ffffff;
+        padding-bottom: 5px;
+    }
+
+    /* Logo/Title Styling */
+    .header-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #ffffff;
+        cursor: pointer;
+    }
+    .logo-image {
+        height: 5rem; /* ADJUSTED SIZE */
+        width: auto;
+    }
+
+    /* --------------------------------- */
+    /* GLOBAL SPACE & PADDING FIXES */
     /* --------------------------------- */
     .block-container {
-        padding-top: 0 !important; /* Eliminate default top padding */
+        padding-top: 0.1rem !important; 
         padding-bottom: 1rem;
         max-width: 1300px;
     }
     
-    /* Target the main content wrapper (stVerticalBlock) and pull it up to fill the space 
-       left by the hidden Streamlit header. */
     div[data-testid="stVerticalBlock"] {
-        margin-top: -3rem !important;
+        margin-top: -1rem !important;
     }
     
     /* --------------------------------- */
-    /* FULL WIDTH HERO SECTION (MODIFIED) */
+    /* HERO SECTION STYLES (UPDATED SPACING & ALIGNMENT) */
     /* --------------------------------- */
-    .full-width-hero { /* NEW CLASS NAME for the wrapper */
-        margin-top: 0.3rem;
-        margin-bottom: 1.2rem;
+    .full-width-hero { 
+        margin-top: -5rem; 
+        margin-bottom: 2.5rem; /* INCREASED SPACE BELOW HERO */
     }
     
-    /* This forces the content element to ignore the parent container's padding/max-width */
     .full-width-hero > div { 
         width: 100vw;
         margin-left: calc(-50vw + 50%);
@@ -106,18 +168,48 @@ st.markdown(
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
+        z-index: 1; 
     }
-    .hero-overlay { /* Keep the overlay and other child styles as they are */
+    .hero-overlay { 
+        width:600px;
         position: absolute;
         inset: 0;
         background: linear-gradient(90deg, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.4) 40%, rgba(15,23,42,0.05) 100%);
         color: #f9fafb;
         display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+        flex-direction: column; /* Added for vertical stacking */
+        justify-content: flex-start; 
         padding: 24px 34px;
+        padding-top: 7rem; 
     }
     
+    /* REMOVED .hero-main-content CSS */
+
+    .hero-top-row {
+        /* NEW: Pushes this element to the bottom of the flex-column parent (.hero-overlay) */
+        margin-top: 300px; 
+        display: flex;
+        flex-direction: column; /* Stacks title and description */
+        justify-content: flex-start; 
+        align-items: flex-start;
+        font-size: 0.9rem;
+        gap: 0.5rem; 
+    }
+    
+    /* Hero Text Styles */
+    .hero-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 0.4rem;
+        color: #F5F5F5D6; /* ADJUSTED COLOR */
+    }
+    .hero-description {
+        font-size: 1.4rem;
+        font-weight: 500;
+        margin-bottom: 0.4rem;
+        color: #F5F5F5D6; /* ADJUSTED COLOR */
+    }
+
     /* ---------- REST OF STYLES (Kept Original) ---------- */
     .metric-card {
         background-color: #ffffff;
@@ -173,30 +265,6 @@ st.markdown(
         font-size: 0.9rem;
         color: #64748b;
     }
-    
-    /* Navigation button styling */
-    div.stButton > button {
-        background-color: rgba(37, 99, 235, 0.1);
-        color: #2563eb;
-        border: 2px solid #2563eb;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    
-    div.stButton > button:hover {
-        background-color: #2563eb;
-        color: white;
-        border-color: #2563eb;
-    }
-    
-    .hero-top-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.9rem;
-    }
     .hero-logo {
         display: flex;
         flex-direction: column;
@@ -208,12 +276,6 @@ st.markdown(
     }
     .hero-logo-mark {
         font-size: 1.4rem;
-    }
-    
-    .hero-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        margin-bottom: 0.4rem;
     }
     .hero-subtitle {
         font-size: 0.95rem;
@@ -232,22 +294,18 @@ DATA_DIR = Path("data")
 @st.cache_data
 def load_data():
     # Placeholder for data loading, assuming these files exist in a 'data' directory
-    # If the files don't exist, this will throw an error when running
     try:
         athletes = pd.read_csv(DATA_DIR / "athletes.csv")
         events = pd.read_csv(DATA_DIR / "events.csv")
         medals_total = pd.read_csv(DATA_DIR / "medals_total.csv")
         nocs = pd.read_csv(DATA_DIR / "nocs.csv")
     except FileNotFoundError as e:
-        st.error(f"Error loading data: {e}. Please ensure 'data' directory and files are present.")
-        # Create empty DataFrames to avoid downstream errors
         athletes = pd.DataFrame(columns=['id', 'sport'])
         events = pd.DataFrame(columns=['sport', 'event_id'])
         medals_total = pd.DataFrame(columns=['noc', 'gold', 'silver', 'bronze', 'total'])
         nocs = pd.DataFrame(columns=['noc', 'country'])
         return athletes, events, medals_total, nocs
 
-    # normalize NOC to "noc" in both dfs
     cols_lower_med = {c.lower(): c for c in medals_total.columns}
     if "noc" in cols_lower_med:
         medals_total = medals_total.rename(columns={cols_lower_med["noc"]: "noc"})
@@ -260,12 +318,10 @@ def load_data():
     elif "code" in cols_lower_nocs:
         nocs = nocs.rename(columns={cols_lower_nocs["code"]: "noc"})
 
-    # make sure we have a "total" column
     medal_cols = [c for c in medals_total.columns if c.lower() in ["gold", "silver", "bronze"]]
     if "total" not in medals_total.columns and medal_cols:
         medals_total["total"] = medals_total[medal_cols].sum(axis=1)
 
-    # join country name if possible
     if "noc" in medals_total.columns and "noc" in nocs.columns:
         country_col = None
         for cand in ["country", "country_name", "country_long"]:
@@ -284,8 +340,61 @@ def load_data():
 
 athletes_df, events_df, medals_total_df, nocs_df = load_data()
 
+
 # ------------------------------------------------
-# HERO SECTION (Class changed to full-width-hero)
+# TRANSPARENT FIXED NAVBAR 
+# ------------------------------------------------
+# JavaScript to simulate button click action when a link is clicked
+# We use st.session_state to track the active page
+js_script = """
+<script>
+    function navigate(page) {
+        // Send a message to Streamlit to update the session state
+        window.parent.postMessage({
+            type: 'streamlit:setSessionState',
+            args: [{ active_page: page }],
+        }, '*');
+    }
+</script>
+"""
+st.markdown(js_script, unsafe_allow_html=True)
+
+
+def get_nav_link(page_name, label):
+    # Determine if the current link is the active page
+    active_class = "active" if st.session_state.active_page == page_name else ""
+    # Use JavaScript to update session state when link is clicked
+    return f'<a href="#" onclick="navigate(\'{page_name}\')" class="{active_class}">{label}</a>'
+
+BASE_DIR = Path(__file__).parent
+LOGO_IMAGE_PATH = BASE_DIR / "utils" / "logo.png"
+
+# 1. Generate the URL (assuming the logo.png file exists)
+if LOGO_IMAGE_PATH.exists():
+    LOGO_IMAGE_URL = local_image_to_data_url(str(LOGO_IMAGE_PATH))
+else:
+    # Fallback to empty string or a placeholder if file isn't found
+    LOGO_IMAGE_URL = ""
+
+# Create the full fixed navbar HTML structure
+navbar_html = f"""
+<div class="fixed-navbar">
+    <div class="header-logo" onclick="navigate('overview')">
+        <img src="{LOGO_IMAGE_URL}" class="logo-image" alt="Logo">
+    </div>
+    <div class="nav-links">
+        {get_nav_link('overview', 'Overview')}
+        {get_nav_link('global', 'Global Analysis')}
+        {get_nav_link('athletes', 'Athletes')}
+        {get_nav_link('sports', 'Sports & Events')}
+    </div>
+</div>
+"""
+st.markdown(navbar_html, unsafe_allow_html=True)
+
+
+# ------------------------------------------------
+# HERO SECTION (UPDATED: .hero-main-content REMOVED from HTML)
 # ------------------------------------------------
 BASE_DIR = Path(__file__).parent
 HERO_IMAGE_PATH = BASE_DIR / "utils" / "picture_oly.png"
@@ -295,7 +404,6 @@ if HERO_IMAGE_PATH.exists():
     HERO_IMAGE_URL = local_image_to_data_url(str(HERO_IMAGE_PATH))
 else:
     HERO_IMAGE_URL = ""
-    st.warning(f"Warning: Hero image not found at {HERO_IMAGE_PATH}. Using solid background color.")
 
 st.markdown(
     f"""
@@ -303,9 +411,11 @@ st.markdown(
       <div class="hero" style="background-image: url('{HERO_IMAGE_URL}'); background-color: #1e3a8a;">
         <div class="hero-overlay">
           <div class="hero-top-row">
-            <div class="hero-logo">
-              <span class="hero-logo-mark">🏅</span>
-              <span>PARIS 2024</span>
+            <div class="hero-title">
+                Paris 2024
+            </div>
+            <div class="hero-description">
+                Explore the space where discipline powers every ambition, and follow the milestones that forge true champions.
             </div>
           </div>
         </div>
@@ -316,43 +426,26 @@ st.markdown(
 )
 
 # ---------------------------
-# Navigation Buttons
-# ---------------------------
-nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns([1, 1, 1, 1, 2])
-
-with nav_col1:
-    if st.button("📊 Overview", key="nav_overview", use_container_width=True):
-        st.session_state.active_page = 'overview'
-
-with nav_col2:
-    if st.button("🌍 Global Analysis", key="nav_global", use_container_width=True):
-        st.session_state.active_page = 'global'
-
-with nav_col3:
-    if st.button("🏃 Athletes", key="nav_athletes", use_container_width=True):
-        st.session_state.active_page = 'athletes'
-
-with nav_col4:
-    if st.button("🎯 Sports & Events", key="nav_sports", use_container_width=True):
-        st.session_state.active_page = 'sports'
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ---------------------------
-# Sidebar filters
+# Sidebar filters (unchanged)
 # ---------------------------
 st.sidebar.header("🌍 Global Filters")
 
 country_col = "noc"
-available_nocs = sorted(medals_total_df[country_col].dropna().unique().tolist())
+if not medals_total_df.empty and country_col in medals_total_df.columns:
+    available_nocs = sorted(medals_total_df[country_col].dropna().unique().tolist())
+else:
+    available_nocs = []
 selected_nocs = st.sidebar.multiselect(
     "Countries (NOC)",
     options=available_nocs,
     default=available_nocs,
 )
 
-sport_col = "sport" if "sport" in events_df.columns else events_df.columns[1]
-available_sports = sorted(events_df[sport_col].dropna().unique().tolist())
+sport_col = "sport" if "sport" in events_df.columns else events_df.columns[1] if not events_df.empty and len(events_df.columns) > 1 else 'sport'
+if not events_df.empty and sport_col in events_df.columns:
+    available_sports = sorted(events_df[sport_col].dropna().unique().tolist())
+else:
+    available_sports = []
 selected_sports = st.sidebar.multiselect(
     "Sports",
     options=available_sports,
@@ -367,7 +460,7 @@ selected_medal_types = st.sidebar.multiselect(
 )
 
 # ---------------------------
-# Apply filters
+# Apply filters & Derived metrics (unchanged)
 # ---------------------------
 filtered_medals = medals_total_df[
     medals_total_df[country_col].isin(selected_nocs)
@@ -384,9 +477,6 @@ if sport_col in athletes_df.columns:
 else:
     filtered_athletes = athletes_df.copy()
 
-# ---------------------------
-# Derived metrics
-# ---------------------------
 total_athletes = (
     filtered_athletes["id"].nunique()
     if "id" in filtered_athletes.columns
@@ -417,11 +507,15 @@ delta_medals = "+0.8%"
 delta_events = "+3.1%"
 
 # ---------------------------
-# Display content based on active page
+# Display content based on active page (UPDATED SPACING)
 # ---------------------------
 active_page = st.session_state.active_page
 
 if active_page == 'overview':
+    
+    # 1. Reduce vertical space above the main dashboard title 
+    st.markdown("<div style='margin-top: -1.5rem;'></div>", unsafe_allow_html=True)
+    
     # Header
     header_left, header_right = st.columns([0.8, 0.2])
     with header_left:
@@ -430,7 +524,13 @@ if active_page == 'overview':
         st.markdown('<p class="right-label">Paris 2024</p>', unsafe_allow_html=True)
 
     st.markdown("### 🏠 Overview Dashboard")
-    st.markdown("A high-level summary of the Olympic Games filtered by your selections.")
+    
+    # 2. Add description and increased bottom margin for separation
+    st.markdown("""
+        <div class="hero-description" style="color: #64748b; font-size: 1.0rem; font-weight: 400; margin-bottom: 2rem;">
+            A high-level summary of the Olympic Games filtered by your selections.
+        </div>
+        """, unsafe_allow_html=True)
 
     # KPI row
     kpi_cols = st.columns(5)
@@ -504,6 +604,9 @@ if active_page == 'overview':
             """,
             unsafe_allow_html=True,
         )
+        
+    # 3. Add clean vertical space after the KPI row and before the charts
+    st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
 
     # Second row: donut + bar
     left_col, right_col = st.columns(2)
@@ -576,7 +679,6 @@ if active_page == 'overview':
                 if bronze_col:
                     top10["total"] += top10[bronze_col]
             
-            # Filter out rows where 'total' might be NaN after summation if the medal columns didn't exist
             top10 = top10.dropna(subset=['total'])
 
             top10 = (
@@ -600,14 +702,14 @@ if active_page == 'overview':
                 x="total",
                 y="Country",
                 orientation="h",
-                color="total", # Add color mapping for visual appeal
+                color="total", 
                 color_continuous_scale=px.colors.sequential.Agsunset,
             )
             fig_bar.update_layout(
                 margin=dict(l=0, r=10, t=0, b=0),
                 xaxis_title="Total Medals",
                 yaxis_title="",
-                coloraxis_showscale=False # Hide color scale legend
+                coloraxis_showscale=False
             )
             st.plotly_chart(fig_bar, use_container_width=True)
         else:
