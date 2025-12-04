@@ -1,0 +1,9 @@
+streamlit
+pandas
+plotly
+matplotlib
+geopandas
+pycountry
+scikit-learn
+folium
+python-dotenv
