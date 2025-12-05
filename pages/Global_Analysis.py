@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from pathlib import Path
+import pycountry_convert as pc
 import random # Imported for completeness, though not strictly used in this specific page logic
 
 # ======================================================================
@@ -37,10 +38,6 @@ def get_country_column(df: pd.DataFrame) -> str | None:
         if cand in df.columns:
             return cand
     return None
-
-import pycountry_convert as pc
-import streamlit as st
-import pandas as pd
 
 @st.cache_data
 def country_to_continent(country_name: str) -> str:
