@@ -48,7 +48,7 @@ header {visibility: hidden;}
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Add padding to avoid content being hidden under the fixed navbar
-st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True) 
+st.markdown("<div style=''></div>", unsafe_allow_html=True) 
 
 # --- CSS global amélioré (kept in file for page-specific styles) ---
 st.markdown("""
@@ -90,13 +90,10 @@ st.markdown("""
 
 /* Section header avec ligne décorative */
 .section-header {
-    margin-top: 40px;
-    margin-bottom: 25px;
     color: white;
     font-weight: bold;
     font-size: 28px;
     border-bottom: 3px solid #F9B93A;
-    padding-bottom: 5px;
 }
 
 /* Selectbox stylisée */
