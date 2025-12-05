@@ -161,7 +161,7 @@ def apply_custom_css():
 
 def render_navbar(current_page):
     """
-    NAVBAR SIMPLE - Ouvre dans la même fenêtre
+    NAVBAR FINALE - Fonctionne avec Streamlit >=1.24.0
     """
     BASE_DIR = Path(__file__).parent
     LOGO_IMAGE_PATH = BASE_DIR / "utils" / "logo.png"
@@ -171,7 +171,7 @@ def render_navbar(current_page):
     else:
         LOGO_IMAGE_URL = ""
     
-    # Pages disponibles
+    # Pages disponibles - ADAPTEZ CES NOMS À VOS FICHIERS
     pages = [
         ("overview", "Overview"),
         ("Global_Analysis", "Global Analysis"),
@@ -180,24 +180,28 @@ def render_navbar(current_page):
         ("bonus", "Bonus")
     ]
     
-    # Créer les liens
+    # Créer les liens avec la BONNE SYNTAXE Streamlit
     nav_links = ""
     for page_id, page_name in pages:
         active = "active" if current_page == page_id else ""
         
-        # LIEN SIMPLE QUI FONCTIONNE
+        # URL CORRECTE pour Streamlit Cloud
+        # Format: /nom_du_fichier_sans_extension
         if page_id == "overview":
-            url = "./"  # Page principale
+            url = "/"  # Page principale
         else:
-            url = f"./{page_id}"  # Autres pages
+            # IMPORTANT: Utilisez le NOM EXACT du fichier SANS .py
+            # Si votre fichier s'appelle "Global_Analysis.py", mettez "/Global_Analysis"
+            # Si votre fichier s'appelle "Global Analysis.py", mettez "/Global%20Analysis"
+            url = f"/{page_id}"
         
-        nav_links += f'<a href="{url}" class="{active}" target="_self">{page_name}</a>'
+        nav_links += f'<a href="{url}" class="{active}" onclick="return streamlitNav(event)" target="_self">{page_name}</a>'
     
-    # HTML de la navbar
+    # HTML de la navbar avec JavaScript minimal
     navbar_html = f'''
     <div class="fixed-navbar">
         <div class="header-logo">
-            <a href="./" target="_self" style="display: flex; align-items: center; text-decoration: none;">
+            <a href="/" onclick="return streamlitNav(event)" target="_self" style="display: flex; align-items: center; text-decoration: none;">
                 <img src="{LOGO_IMAGE_URL}" class="logo-image" alt="Olympic Logo">
             </a>
         </div>
@@ -207,39 +211,28 @@ def render_navbar(current_page):
     </div>
     
     <script>
-    // TRÈS IMPORTANT: Forcer l'ouverture dans la même fenêtre
+    // Fonction UNIQUE pour gérer la navigation Streamlit
+    function streamlitNav(event) {{
+        // IMPORTANT: Laisser Streamlit gérer la navigation normalement
+        // Le target="_self" force l'ouverture dans la même fenêtre
+        return true;
+    }}
+    
+    // SIMPLE protection contre les clics molette
     document.addEventListener("DOMContentLoaded", function() {{
-        // Pour tous les liens de la navbar
-        document.querySelectorAll(".fixed-navbar a").forEach(link => {{
-            // Forcer target="_self"
-            link.setAttribute("target", "_self");
-            
-            // Empêcher l'ouverture dans un nouvel onglet
-            link.addEventListener("click", function(e) {{
-                // S'assurer que c'est bien dans la même fenêtre
-                this.target = "_self";
-            }});
-            
-            link.addEventListener("auxclick", function(e) {{
-                // Empêcher le clic molette (ouvre dans nouvel onglet)
-                if (e.button === 1) {{
+        const navbar = document.querySelector(".fixed-navbar");
+        if (navbar) {{
+            navbar.addEventListener("auxclick", function(e) {{
+                if (e.button === 1 && (e.target.tagName === "A" || e.target.closest("a"))) {{
                     e.preventDefault();
-                    e.stopPropagation();
-                    this.click();
                 }}
-            }});
-            
-            link.addEventListener("contextmenu", function(e) {{
-                // Empêcher le menu contextuel "ouvrir dans nouvel onglet"
-                e.preventDefault();
-            }});
-        }});
+            }}, true);
+        }}
     }});
     </script>
     '''
     
     st.markdown(navbar_html, unsafe_allow_html=True)
-
 
 def get_medal_column(df: pd.DataFrame, medal_name: str):
     """
