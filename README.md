@@ -43,21 +43,25 @@ pip install -r requirements.txt
 
 ### 📌 5. Run the application
 ```bash
-streamlit run Home.py
+streamlit run app.py
 ```
 
 ## 📁 Folder Structure
 ```
 .
-├─ Home.py                 (Welcome page)
+├─ app.py                 (Welcome page)
+├─ utils.py           
 ├─ pages/
 │   ├─ Global_Analysis.py
-│   ├─ Athletes_Insights.py
+│   ├─ Athlete_Performance.py
 │   ├─ bonus.py
 │   ├─ Sports_and_Events.py
-│ 
-├─ data/
+├ data/
+├ utils/
+│   ├─ results/
 ├─ requirements.txt
+├─ .gitignore
+├─ __init__.py
 └─ README.md
 ```
 ## 🎨 Design Choices
