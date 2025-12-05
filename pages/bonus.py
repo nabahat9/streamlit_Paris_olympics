@@ -23,7 +23,7 @@ st.set_page_config(
 # Apply CSS and Render Navbar (CRITICAL ADDITION)
 apply_custom_css()
 # Pass the unique identifier for this page to mark it active in the navbar
-render_navbar(current_page="la28_dashboard") 
+render_navbar(current_page="bonus") 
 
 # Constants
 MEDAL_COLORS = {

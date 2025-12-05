@@ -159,7 +159,7 @@ def apply_custom_css():
     )
 
 
-def render_navbar(current_page="overview"):
+def render_navbar(current_page):
     """
     Render the navigation bar with the current page highlighted.
     

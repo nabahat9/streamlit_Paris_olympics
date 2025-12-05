@@ -121,7 +121,7 @@ st.set_page_config(
 apply_custom_css()
 # Pass the unique identifier for this page to mark it active in the navbar
 # Assuming the file is named global_analysis.py in the pages/ folder
-render_navbar(current_page="global_analysis") 
+render_navbar(current_page="Global_Analysis") 
 # ======================================================================
 
 

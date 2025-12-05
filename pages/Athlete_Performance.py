@@ -32,7 +32,7 @@ st.set_page_config(
 # 🚀 APPLY NAVBAR AND CSS
 apply_custom_css()
 # Pass the unique identifier for this page to mark it active in the navbar
-render_navbar(current_page="athletes_performance") 
+render_navbar(current_page="Athlete_Performance") 
 # ======================================================================
 
 

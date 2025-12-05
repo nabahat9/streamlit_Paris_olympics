@@ -398,14 +398,14 @@ with right_col:
             top10["Country"] = top10[country_col].map(label_series).fillna(top10[country_col])
         else:
             top10["Country"] = top10[country_col]
-
+        maroon_scale = ["#693001", '#F7E7E7']
         fig_bar = px.bar(
             top10.sort_values("total"),
             x="total",
             y="Country",
             orientation="h",
             color="total", 
-            color_continuous_scale=px.colors.sequential.Teal,
+            color_continuous_scale=maroon_scale,
         )
         fig_bar.update_layout(
             margin=dict(l=0, r=10, t=0, b=0),

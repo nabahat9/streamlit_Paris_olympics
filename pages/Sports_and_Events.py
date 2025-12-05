@@ -42,7 +42,7 @@ apply_custom_css()
 
 # 2. Render the custom navbar, marking this page as active
 # NOTE: The identifier "sports_events" must match the key used in your render_navbar logic.
-render_navbar(current_page="sports_events") 
+render_navbar(current_page="Sports_and_Events") 
 # ======================================================================
 
 # --- Set standard colors ---
