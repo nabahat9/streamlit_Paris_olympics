@@ -24,10 +24,6 @@ def apply_custom_css():
     st.markdown(
         """
         <style>
-        /* Hide Streamlit default elements */
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        header {visibility: hidden;}
         
         /* --------------------------------- */
         /* TRANSPARENT FIXED NAVBAR STYLES */
