@@ -53,7 +53,7 @@ st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
 # --- CSS global amélioré (kept in file for page-specific styles) ---
 st.markdown("""
 <style>
-.stApp { background-color: #1B1108 !important; }
+.stApp {  }
 
 /* Avatar avec gradient et ombre */
 .avatar-container {
@@ -265,7 +265,11 @@ if 'birth_date' in athletes.columns:
                 plot_bgcolor='white',
                 margin=dict(t=50, l=20, r=20, b=50),
                 font=dict(color="#1B1108"),
-                xaxis=dict(showgrid=False),
+                xaxis=dict(
+                showgrid=False,
+            # ADDED: Set the x-axis tick label font color to black (#000000)
+                tickfont=dict(color='#000000') 
+                ),
                 yaxis=dict(showgrid=True, gridcolor="#F9B93A"),
                 title_font=dict(size=20, color="#1B1108", family="Arial Black"),
                 legend=dict(title='Gender', font=dict(color='#1B1108'))
@@ -349,7 +353,11 @@ if 'country' in athletes.columns and 'gender' in athletes.columns:
             paper_bgcolor='white',
             plot_bgcolor='white',
             font=dict(color="#1B1108"),
-            xaxis=dict(showgrid=False),
+            xaxis=dict(
+            showgrid=False,
+            # ADDED: Set the x-axis tick label font color to black (#000000)
+            tickfont=dict(color='#000000') 
+            ),
             yaxis=dict(showgrid=True, gridcolor="#F9B93A"),
             margin=dict(t=50, l=20, r=20, b=50),
             legend=dict(title='Gender', font=dict(color='#1B1108'))
@@ -381,8 +389,11 @@ if not medals.empty:
             paper_bgcolor='white',
             plot_bgcolor='white',
             font=dict(color="#1B1108"),
-            xaxis_tickangle=-45,
-            xaxis=dict(showgrid=False),
+            xaxis=dict(
+            showgrid=False,
+            # ADDED: Set the x-axis tick label font color to black (#000000)
+            tickfont=dict(color='#000000') 
+            ),
             yaxis=dict(showgrid=True, gridcolor="#F9B93A"),
             margin=dict(t=50, l=20, r=20, b=50),
             legend=dict(title='Medals', font=dict(color='#1B1108'))
