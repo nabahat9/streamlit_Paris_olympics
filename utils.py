@@ -161,10 +161,7 @@ def apply_custom_css():
 
 def render_navbar(current_page):
     """
-    Render the navigation bar with the current page highlighted.
-    
-    Args:
-        current_page: The name of the current page (e.g., 'overview', 'Global_Analysis')
+    NAVBAR SIMPLE - Ouvre dans la même fenêtre
     """
     BASE_DIR = Path(__file__).parent
     LOGO_IMAGE_PATH = BASE_DIR / "utils" / "logo.png"
@@ -174,34 +171,73 @@ def render_navbar(current_page):
     else:
         LOGO_IMAGE_URL = ""
     
-    # Define navigation items: (page_name, display_label, url_path)
-    nav_items = [
-        ("overview", "Overview", "/"),
-        ("Global_Analysis", "Global Analysis", "/Global_Analysis"),
-        ("Athlete_Performance", "Athlete Performance", "/Athlete_Performance"),
-        ("Sports_and_Events", "Sports & Events", "/Sports_and_Events"),
-        ("bonus", "bonus", "/bonus")
+    # Pages disponibles
+    pages = [
+        ("overview", "Overview"),
+        ("Global_Analysis", "Global Analysis"),
+        ("Athlete_Performance", "Athlete Performance"),
+        ("Sports_and_Events", "Sports & Events"),
+        ("bonus", "Bonus")
     ]
     
-    # Build navigation links HTML
-    nav_links_html = ""
-    for page_name, label, url in nav_items:
-        active_class = "active" if current_page == page_name else ""
-        nav_links_html += f'<a href="{url}" class="{active_class}">{label}</a>'
+    # Créer les liens
+    nav_links = ""
+    for page_id, page_name in pages:
+        active = "active" if current_page == page_id else ""
+        
+        # LIEN SIMPLE QUI FONCTIONNE
+        if page_id == "overview":
+            url = "./"  # Page principale
+        else:
+            url = f"./{page_id}"  # Autres pages
+        
+        nav_links += f'<a href="{url}" class="{active}" target="_self">{page_name}</a>'
     
-    # Render the complete navbar
-    navbar_html = f"""
+    # HTML de la navbar
+    navbar_html = f'''
     <div class="fixed-navbar">
         <div class="header-logo">
-            <a href="/" style="display: flex; align-items: center; text-decoration: none;">
+            <a href="./" target="_self" style="display: flex; align-items: center; text-decoration: none;">
                 <img src="{LOGO_IMAGE_URL}" class="logo-image" alt="Olympic Logo">
             </a>
         </div>
         <div class="nav-links">
-            {nav_links_html}
+            {nav_links}
         </div>
     </div>
-    """
+    
+    <script>
+    // TRÈS IMPORTANT: Forcer l'ouverture dans la même fenêtre
+    document.addEventListener("DOMContentLoaded", function() {{
+        // Pour tous les liens de la navbar
+        document.querySelectorAll(".fixed-navbar a").forEach(link => {{
+            // Forcer target="_self"
+            link.setAttribute("target", "_self");
+            
+            // Empêcher l'ouverture dans un nouvel onglet
+            link.addEventListener("click", function(e) {{
+                // S'assurer que c'est bien dans la même fenêtre
+                this.target = "_self";
+            }});
+            
+            link.addEventListener("auxclick", function(e) {{
+                // Empêcher le clic molette (ouvre dans nouvel onglet)
+                if (e.button === 1) {{
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.click();
+                }}
+            }});
+            
+            link.addEventListener("contextmenu", function(e) {{
+                // Empêcher le menu contextuel "ouvrir dans nouvel onglet"
+                e.preventDefault();
+            }});
+        }});
+    }});
+    </script>
+    '''
+    
     st.markdown(navbar_html, unsafe_allow_html=True)
 
 
