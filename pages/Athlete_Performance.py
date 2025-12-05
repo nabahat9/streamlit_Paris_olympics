@@ -5,6 +5,7 @@ from datetime import datetime
 import plotly.express as px
 import re
 from pathlib import Path
+import pycountry_convert as pc
 
 # --- Configurer la page ---
 st.set_page_config(
@@ -244,22 +245,58 @@ if 'birth_date' in athletes.columns:
 st.markdown('<div class="section-header">Gender Distribution by Country</div>', unsafe_allow_html=True)
 
 if 'country' in athletes.columns and 'gender' in athletes.columns:
-    countries = ["All"] + list(athletes['country'].dropna().unique())
-    selected_country = st.selectbox("Select Country (or All)", countries)
-    if selected_country != "All":
-        gender_df = athletes[athletes['country']==selected_country]['gender'].value_counts().reset_index()
+
+    # --- Extraire les continents pour chaque pays du dataset ---
+    def country_to_continent(country_name):
+        try:
+            country_alpha2 = pc.country_name_to_country_alpha2(country_name)
+            continent_name = pc.country_alpha2_to_continent_code(country_alpha2)
+            continents_map = {'AF':'Africa', 'NA':'North America', 'SA':'South America', 
+                              'AS':'Asia', 'EU':'Europe', 'OC':'Oceania', 'AN':'Antarctica'}
+            return continents_map.get(continent_name, "Other")
+        except:
+            return "Other"
+
+    athletes['continent'] = athletes['country'].apply(country_to_continent)
+
+    # --- Selection du continent ---
+    continents = ["All"] + sorted(athletes['continent'].dropna().unique())
+    selected_continent = st.selectbox("Select Continent", continents)
+
+    # --- Filtrage des pays selon le continent ---
+    if selected_continent == "All":
+        available_countries = ["All"] + sorted(athletes['country'].dropna().unique())
     else:
-        gender_df = athletes['gender'].value_counts().reset_index()
-    gender_df.columns = ['gender','count']
-    
+        available_countries = ["All"] + sorted(athletes[athletes['continent'] == selected_continent]['country'].dropna().unique())
+
+    selected_country = st.selectbox("Select Country", available_countries)
+
+    # --- Filtrage des données pour le graphique ---
+    df_filtered = athletes.copy()
+    if selected_continent != "All":
+        df_filtered = df_filtered[df_filtered['continent'] == selected_continent]
+    if selected_country != "All":
+        df_filtered = df_filtered[df_filtered['country'] == selected_country]
+
+    # --- Calcul du gender count ---
+    gender_df = df_filtered['gender'].value_counts().reset_index()
+    gender_df.columns = ['gender', 'count']
+
+    # --- Affichage du graphique ---
     if not gender_df.empty:
+        title_text = "Worldwide" if selected_continent=="All" and selected_country=="All" else ""
+        if selected_continent != "All":
+            title_text = f"in {selected_continent}"
+        if selected_country != "All":
+            title_text += f" - {selected_country}"
+
         fig_gender = px.bar(
             gender_df,
             x='gender',
             y='count',
             color='gender',
             text='count',
-            title=f"Gender Distribution {'in ' + selected_country if selected_country != 'All' else 'Worldwide'}",
+            title=f"Gender Distribution {title_text}",
             color_discrete_sequence=olympic_colors
         )
         fig_gender.update_layout(
