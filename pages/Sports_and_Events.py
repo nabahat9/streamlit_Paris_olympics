@@ -3,7 +3,30 @@ import pandas as pd
 import plotly.express as px
 from pathlib import Path
 import os
-import random 
+import random
+
+# ======================================================================
+# 🚀 NAVBAR INTEGRATION (CRITICAL CHANGES HERE) 
+# Assumes utils.py is in the parent directory (root)
+try:
+    from utils import apply_custom_css, render_navbar 
+except ImportError as e:
+    # Define dummy functions to prevent immediate crash if import fails
+    def apply_custom_css(): 
+        pass
+    def render_navbar(current_page):
+        # Fallback to standard Streamlit sidebar navigation if custom import fails
+        st.sidebar.title("🏅 Olympic Dashboard")
+        st.sidebar.markdown("---")
+        st.sidebar.page_link("app.py", label="🏠 1. Home/Overview")
+        st.sidebar.page_link("pages/medals.py", label="🏆 2. Medal Standings")
+        st.sidebar.page_link("pages/athletes.py", label="🏃‍♀️ 3. Athlete Analysis")
+        st.sidebar.page_link("pages/sports_events.py", label="🏟️ 4. Sports & Events", disabled=True) 
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("*Custom Navbar Utility Missing.*")
+
+    st.error(f"Import Error: Could not import utility functions (utils.py). Falling back to sidebar. Error: {e}")
+# ======================================================================
 
 # --- Configuration ---
 st.set_page_config(
@@ -12,9 +35,19 @@ st.set_page_config(
     layout="wide",
 )
 
-# Define a consistent color scheme for medals (if needed)
+# ======================================================================
+# 🚀 APPLY CUSTOM NAVBAR AND CSS
+# 1. Apply global/custom CSS
+apply_custom_css() 
+
+# 2. Render the custom navbar, marking this page as active
+# NOTE: The identifier "sports_events" must match the key used in your render_navbar logic.
+render_navbar(current_page="sports_events") 
+# ======================================================================
+
+# --- Set standard colors ---
 MEDAL_COLOR_MAP = {
-    "Gold": "#FFD700",   
+    "Gold": "#FFD700",  
     "Silver": "#C0C0C0", 
     "Bronze": "#CD7F32", 
 }
@@ -122,7 +155,7 @@ def load_data():
     # Final Check: If granular data is still missing, use the country total file as a fallback
     # ... (Fallback logic removed for brevity but should exist if the files are unreliable)
     # ... (Assuming synthetic data is only for scheduling and venues, as per your code structure)
-         
+        
     # --- Prepare Venue Data (Synthetic for Mapbox task - Unchanged) ---
     venue_df = pd.DataFrame({
         'Venue': ['Stade de France', 'Arena Bercy', 'Paris La Défense Arena', 'Place de la Concorde', 'Versailles'],
@@ -161,33 +194,10 @@ def load_data():
 medals_total_df, schedule_df, venue_df, sport_medals_df = load_data()
 
 
-# --- CSS & Design (Unchanged) ---
-st.markdown(
-    """
-    <style>
-    /* Adjust main content container padding for a cleaner look */
-    .block-container {
-        padding-top: 1.5rem !important;
-        padding-bottom: 2rem;
-        max-width: 1400px;
-    }
-    
-    /* Ensure Streamlit headers are visible in dark mode */
-    h2, h3, h4 {
-        color: #f0f2f6 !important; 
-        margin-top: 1.5rem; 
-    }
-    
-    /* Set minimum height for charts */
-    .stPlotlyChart {
-        background-color: transparent !important;
-    }
-    
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
+# --- CSS & Design (Adjusted to allow custom CSS to take precedence) ---
+# NOTE: Removed the duplicated CSS block here as apply_custom_css() should handle styling.
+# Adding a margin for content under the fixed navbar (if not handled by custom CSS)
+st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True) 
 
 # ==============================================================================
 ## 🏟️ The Competition Arena: Sports and Events Analysis

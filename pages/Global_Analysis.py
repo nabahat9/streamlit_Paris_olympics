@@ -1,8 +1,23 @@
+# pages/global_analysis.py
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 from pathlib import Path
 import random # Imported for completeness, though not strictly used in this specific page logic
+
+# ======================================================================
+# 🚀 NAVBAR INTEGRATION (CRITICAL CHANGES HERE) 
+# Assumes utils.py is in the parent directory (root)
+try:
+    from utils import apply_custom_css, render_navbar 
+except ImportError as e:
+    # Fallback if the utility file isn't found
+    st.error(f"Import Error: Could not import utility functions (apply_custom_css, render_navbar) from the root directory. Error: {e}")
+    # Define dummy functions to prevent immediate crash if import fails
+    def apply_custom_css(): pass
+    def render_navbar(current_page): pass
+# ======================================================================
 
 # ------------------------------------------------
 # Define a consistent color scheme for medals
@@ -101,13 +116,25 @@ st.set_page_config(
     layout="wide",
 )
 
+# ======================================================================
+# 🚀 APPLY NAVBAR AND CSS
+apply_custom_css()
+# Pass the unique identifier for this page to mark it active in the navbar
+# Assuming the file is named global_analysis.py in the pages/ folder
+render_navbar(current_page="global_analysis") 
+# ======================================================================
+
+
 # ------------------------------------------------
 # Global CSS (Retaining your provided styling)
 # ------------------------------------------------
 st.markdown(
     """
     <style>
-    /* Main container */
+    /* Add top margin to prevent content from being hidden by fixed navbar */
+    .stApp > header {
+        margin-top: 4rem; 
+    }
     .block-container {
         padding-top: 1.5rem !important;
         padding-bottom: 2rem;
@@ -249,7 +276,7 @@ def load_data():
         if medalists_path.exists():
             medalists = pd.read_csv(medalists_path)
             medalists = normalize_noc_column(medalists)
-        
+            
         medals_total = add_continent_column(medals_total, nocs)
 
         return athletes, events, medals_total, nocs, medalists

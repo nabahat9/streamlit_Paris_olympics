@@ -1,11 +1,29 @@
+# pages/la28_dashboard.py
+
 from pathlib import Path
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import date
 
+# Import shared utilities (CRITICAL ADDITION)
+# Assuming utils.py is in the parent directory or properly imported if using pages/ structure
+# If utils.py is in the same directory as app.py (the entry point), this import works.
+# If you are using Streamlit's native multipage, put this file in a 'pages' folder 
+# and ensure you have an empty __init__.py in the parent folder if needed for imports.
+# I will assume utils.py is available.
+from utils import apply_custom_css, render_navbar
 # --- 1. Configuration and Constants ---
-st.set_page_config(layout="wide", page_title="LA28 Olympic Data Dashboard")
+st.set_page_config(
+    layout="wide", 
+    page_title="LA28 Olympic Data Dashboard",
+    page_icon="🏆"
+)
+
+# Apply CSS and Render Navbar (CRITICAL ADDITION)
+apply_custom_css()
+# Pass the unique identifier for this page to mark it active in the navbar
+render_navbar(current_page="la28_dashboard") 
 
 # Constants
 MEDAL_COLORS = {
@@ -33,7 +51,8 @@ NOC_TO_CONTINENT = {
 def load_medallists_data():
     """Loads and cleans the granular medallists data (used for Ch2, Ch4, Ch5)."""
     try:
-        data_dir = Path("data")
+        # NOTE: Adjust this path if your data directory structure is different
+        data_dir = Path(__file__).parent.parent / "data" 
         df = pd.read_csv(data_dir / "medallists.csv")
         df = df.rename(columns={
             'discipline': 'Sport',
@@ -49,30 +68,31 @@ def load_medallists_data():
         df['Continent'] = df['NOC'].map(NOC_TO_CONTINENT).fillna('Other')
         return df
     except FileNotFoundError:
-        st.error("Error: medallists.csv not found.")
+        st.error("Error: medallists.csv not found. Check data folder path.")
         return pd.DataFrame()
 
 @st.cache_data
 def load_medals_total_data():
     """Loads the aggregated medals data (used for Ch1, Ch3 map)."""
     try:
-        data_dir = Path("data")
+        # NOTE: Adjust this path if your data directory structure is different
+        data_dir = Path(__file__).parent.parent / "data" 
         df = pd.read_csv(data_dir / "medals_total.csv")
-        df = df.rename(columns={'country_code': 'NOC'})
-        # Handle cases where Total might be missing or wrongly named
+        df = df.rename(columns={'country_code': 'NOC', 'country': 'country'})
+        
         if 'Total' not in df.columns:
-             # Assuming 'Gold Medal', 'Silver Medal', 'Bronze Medal' exist based on snippet
+            # Assuming 'Gold Medal', 'Silver Medal', 'Bronze Medal' exist based on snippet
             medal_cols = [col for col in df.columns if 'Medal' in col]
             if len(medal_cols) == 3:
                 df['Total'] = df[medal_cols].sum(axis=1)
             else:
-                st.warning("Medal count columns not found in medals_total.csv. Ranking will be limited.")
+                st.warning("Medal count columns not found in medals_total.csv.")
                 return pd.DataFrame()
 
         df['Continent'] = df['NOC'].map(NOC_TO_CONTINENT).fillna('Other')
         return df
     except FileNotFoundError:
-        st.error("Error: medals_total.csv not found.")
+        st.error("Error: medals_total.csv not found. Check data folder path.")
         return pd.DataFrame()
 
 # Load DataFrames
@@ -83,12 +103,15 @@ medals_total_df = load_medals_total_data()
 # Main Dashboard Layout
 # ==============================================================================
 
+# Add padding to avoid content being hidden under the fixed navbar
+st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True) 
+
 st.title("LA28 Olympic Data Dashboard 🏅")
 st.markdown("Explore medal performance and athlete distributions using advanced interactive visualizations.")
 
 # Check for data availability
 if medallists_df.empty or medals_total_df.empty:
-    st.error("Please ensure you have uploaded `medallists.csv` and `medals_total.csv` in the same directory.")
+    st.error("Please ensure you have uploaded `medallists.csv` and `medals_total.csv` in the correct 'data/' directory.")
     st.stop()
 
 # Use tabs for clean navigation between challenges
@@ -124,7 +147,6 @@ with tab1:
     )
     
     # --- Data Preparation (Necessary to include Gender) ---
-    # Merge total medals with gender data for filtering
     medals_gender_df = medallists_df.groupby(['NOC', 'Gender', 'Medal'], as_index=False).size().rename(columns={'size': 'Count'})
     medals_pivot = medals_gender_df.pivot_table(
         index=['NOC', 'Gender'],
@@ -146,7 +168,6 @@ with tab1:
 
     # 1. Continent Filter
     if selected_continent_1 != 'All':
-        # This is where the continent filter is applied successfully
         filtered_df_1 = filtered_df_1[filtered_df_1['Continent'] == selected_continent_1]
 
     # 2. Gender Filter/Aggregation
@@ -191,6 +212,7 @@ with tab1:
             
         fig_bar_1.update_layout(xaxis_title="Country (NOC)", yaxis_title=selected_metric_1, height=600, template="plotly_dark")
         st.plotly_chart(fig_bar_1, use_container_width=True)
+
 # --- TAB 2: Athletes by Sport Discipline, Country, and Gender (Challenge 2) ---
 
 with tab2:
@@ -403,6 +425,10 @@ with tab5:
     st.header("🗓️ Challenge 5: Who Won the Day?")
     st.markdown("Select a day to see all medal events and the top performing country for that day.")
     
+    if medallists_df.empty:
+        st.info("No data available for date analysis.")
+        st.stop()
+        
     min_date = medallists_df['Date'].min()
     max_date = medallists_df['Date'].max()
 

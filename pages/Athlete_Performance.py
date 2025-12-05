@@ -1,3 +1,5 @@
+# pages/athletes_performance.py
+
 import streamlit as st
 import pandas as pd
 import ast
@@ -7,6 +9,18 @@ import re
 from pathlib import Path
 import pycountry_convert as pc
 
+# ======================================================================
+# 🚀 NAVBAR INTEGRATION (CRITICAL CHANGES HERE) 
+# Assumes utils.py is in the parent directory (root)
+try:
+    from utils import apply_custom_css, render_navbar 
+except ImportError as e:
+    st.error(f"Import Error: Could not import utility functions from the root directory. Error: {e}")
+    # Define dummy functions to prevent immediate crash if import fails
+    def apply_custom_css(): pass
+    def render_navbar(current_page): pass
+# ======================================================================
+
 # --- Configurer la page ---
 st.set_page_config(
     page_title="Paris 2024 Athlete Dashboard",
@@ -14,7 +28,16 @@ st.set_page_config(
     layout="wide"
 )
 
+# ======================================================================
+# 🚀 APPLY NAVBAR AND CSS
+apply_custom_css()
+# Pass the unique identifier for this page to mark it active in the navbar
+render_navbar(current_page="athletes_performance") 
+# ======================================================================
+
+
 # --- Supprimer header/footer Streamlit ---
+# NOTE: The custom navbar replaces the Streamlit header, so hiding it is good.
 hide_streamlit_style = """
 <style>
 #MainMenu {visibility: hidden;}
@@ -24,7 +47,10 @@ header {visibility: hidden;}
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-# --- CSS global amélioré ---
+# Add padding to avoid content being hidden under the fixed navbar
+st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True) 
+
+# --- CSS global amélioré (kept in file for page-specific styles) ---
 st.markdown("""
 <style>
 .stApp { background-color: #1B1108 !important; }
@@ -97,10 +123,15 @@ olympic_colors = ["#1A73E8", "#F4C300", "#4E342E", "#009F4D", "#D32F2F"]
 BASE_DIR = Path(__file__).parent.parent  # remonte d'un dossier (depuis pages/ → projet/)
 DATA_DIR = BASE_DIR / "data"
 
-athletes = pd.read_csv(DATA_DIR / "athletes.csv")
-coaches = pd.read_csv(DATA_DIR / "coaches.csv") if (DATA_DIR / "coaches.csv").exists() else None
-teams = pd.read_csv(DATA_DIR / "teams.csv") if (DATA_DIR / "teams.csv").exists() else None
-medals = pd.read_csv(DATA_DIR / "medals.csv")
+try:
+    athletes = pd.read_csv(DATA_DIR / "athletes.csv")
+    coaches = pd.read_csv(DATA_DIR / "coaches.csv") if (DATA_DIR / "coaches.csv").exists() else None
+    teams = pd.read_csv(DATA_DIR / "teams.csv") if (DATA_DIR / "teams.csv").exists() else None
+    medals = pd.read_csv(DATA_DIR / "medals.csv")
+except FileNotFoundError as e:
+    st.error(f"Data file not found: {e}. Ensure data files are in a 'data/' folder in the root directory.")
+    st.stop()
+
 
 # --- Fonctions utilitaires ---
 def create_avatar(name):
@@ -132,44 +163,50 @@ st.markdown('<div class="section-header">Athlete Detailed Profile</div>', unsafe
 athlete_names = athletes['name'].dropna().tolist()
 selected_athlete_name = st.selectbox("Select Athlete", athlete_names)
 
-athlete = athletes[athletes['name'] == selected_athlete_name].iloc[0]
+athlete_row = athletes[athletes['name'] == selected_athlete_name]
 
-col1, col2 = st.columns([1,1])
-with col1:
-    st.markdown(create_avatar(selected_athlete_name), unsafe_allow_html=True)
+if not athlete_row.empty:
+    athlete = athlete_row.iloc[0]
 
-with col2:
-    country_info = []
-    if 'country' in athlete and pd.notna(athlete['country']):
-        country_info.append(str(athlete['country']))
-    if 'country_code' in athlete and pd.notna(athlete['country_code']):
-        country_info.append(f"({athlete['country_code']})")
-    
-    coach_list = []
-    if 'coach' in athlete and pd.notna(athlete['coach']):
-        coach_list += [c.strip() for c in athlete['coach'].split(',')]
-    if coaches is not None and 'athlete_id' in coaches.columns:
-        coach_list += coaches[coaches['athlete_id']==athlete['code']]['coach_name'].tolist()
-    if teams is not None and 'athlete_id' in teams.columns:
-        coach_list += teams[teams['athlete_id']==athlete['code']]['coach_name'].tolist()
-    coach_list = list(dict.fromkeys(filter(None,[clean_coach_name(c) for c in coach_list])))
+    col1, col2 = st.columns([1,1])
+    with col1:
+        st.markdown(create_avatar(selected_athlete_name), unsafe_allow_html=True)
 
-    sports_list = []
-    if pd.notna(athlete.get('disciplines', None)):
-        sports_list += safe_literal_eval(athlete['disciplines'])
-    if pd.notna(athlete.get('other_sports', None)):
-        sports_list += safe_literal_eval(athlete['other_sports'])
+    with col2:
+        country_info = []
+        if 'country' in athlete and pd.notna(athlete['country']):
+            country_info.append(str(athlete['country']))
+        if 'country_code' in athlete and pd.notna(athlete['country_code']):
+            country_info.append(f"({athlete['country_code']})")
+        
+        coach_list = []
+        if 'coach' in athlete and pd.notna(athlete['coach']):
+            coach_list += [c.strip() for c in athlete['coach'].split(',')]
+        if coaches is not None and 'code' in athletes.columns and 'athlete_id' in coaches.columns:
+            coach_list += coaches[coaches['athlete_id']==athlete['code']]['coach_name'].tolist()
+        if teams is not None and 'code' in athletes.columns and 'athlete_id' in teams.columns:
+            coach_list += teams[teams['athlete_id']==athlete['code']]['coach_name'].tolist()
+        coach_list = list(dict.fromkeys(filter(None,[clean_coach_name(c) for c in coach_list])))
 
-    st.markdown(f"""
-    <div class="athlete-info">
-        <p><strong>Full Name:</strong> {athlete['name']}</p>
-        <p><strong>Country/NOC:</strong> {' '.join(country_info) if country_info else 'Not available'}</p>
-        <p><strong>Height:</strong> {athlete['height']} cm</p>
-        <p><strong>Weight:</strong> {athlete['weight']} kg</p>
-        <p><strong>Coach(s):</strong> {', '.join(coach_list) if coach_list else 'Not available'}</p>
-        <p><strong>Sport(s) & Discipline(s):</strong> {', '.join(sports_list) if sports_list else 'Not available'}</p>
-    </div>
-    """, unsafe_allow_html=True)
+        sports_list = []
+        if pd.notna(athlete.get('disciplines', None)):
+            sports_list += safe_literal_eval(athlete['disciplines'])
+        if pd.notna(athlete.get('other_sports', None)):
+            sports_list += safe_literal_eval(athlete['other_sports'])
+
+        st.markdown(f"""
+        <div class="athlete-info">
+            <p><strong>Full Name:</strong> {athlete['name']}</p>
+            <p><strong>Country/NOC:</strong> {' '.join(country_info) if country_info else 'Not available'}</p>
+            <p><strong>Height:</strong> {athlete.get('height', 'N/A')} cm</p>
+            <p><strong>Weight:</strong> {athlete.get('weight', 'N/A')} kg</p>
+            <p><strong>Coach(s):</strong> {', '.join(coach_list) if coach_list else 'Not available'}</p>
+            <p><strong>Sport(s) & Discipline(s):</strong> {', '.join(sports_list) if sports_list else 'Not available'}</p>
+        </div>
+        """, unsafe_allow_html=True)
+else:
+    st.info("No data available for the selected athlete.")
+
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -182,10 +219,12 @@ if 'birth_date' in athletes.columns:
 
     # --- Calcul âge ---
     athletes['birth_date'] = pd.to_datetime(athletes['birth_date'], errors='coerce')
+    # Use 2024-07-26 as the reference date for age calculation
     athletes['age'] = (pd.to_datetime("2024-07-26") - athletes['birth_date']).dt.days // 365
 
     # --- Extraire toutes les disciplines ---
     if 'disciplines' in athletes.columns:
+        # Safely extract and flatten the list of all disciplines
         all_disciplines = sorted(
             list(set([d for sublist in athletes['disciplines'].dropna().apply(safe_literal_eval) for d in sublist]))
         )
@@ -195,13 +234,13 @@ if 'birth_date' in athletes.columns:
 
         # --- Filtrage ---
         if selected_sport == "All":
-            sport_athletes = athletes.copy()
+            sport_athletes = athletes.dropna(subset=['age']).copy()
         else:
             sport_athletes = athletes[
                 athletes['disciplines'].apply(
                     lambda x: selected_sport in safe_literal_eval(x) if pd.notna(x) else False
                 )
-            ]
+            ].dropna(subset=['age'])
 
         # --- Plot ---
         if not sport_athletes.empty and 'gender' in sport_athletes.columns:
@@ -236,7 +275,7 @@ if 'birth_date' in athletes.columns:
             st.plotly_chart(fig_age, use_container_width=True)
 
         else:
-            st.info("No data available for age distribution.")
+            st.info("No age data available for the selected sport.")
 
 
 # -------------------------------
@@ -247,8 +286,13 @@ st.markdown('<div class="section-header">Gender Distribution by Country</div>', 
 if 'country' in athletes.columns and 'gender' in athletes.columns:
 
     # --- Extraire les continents pour chaque pays du dataset ---
+    @st.cache_data
     def country_to_continent(country_name):
         try:
+            # Handle common non-standard names that pc.country_name_to_country_alpha2 might struggle with
+            if country_name == "Democratic Republic of the Congo":
+                country_name = "Congo, The Democratic Republic of the"
+            
             country_alpha2 = pc.country_name_to_country_alpha2(country_name)
             continent_name = pc.country_alpha2_to_continent_code(country_alpha2)
             continents_map = {'AF':'Africa', 'NA':'North America', 'SA':'South America', 
@@ -257,7 +301,9 @@ if 'country' in athletes.columns and 'gender' in athletes.columns:
         except:
             return "Other"
 
-    athletes['continent'] = athletes['country'].apply(country_to_continent)
+    # Apply function to create continent column once and cache it
+    if 'continent' not in athletes.columns:
+        athletes['continent'] = athletes['country'].apply(country_to_continent)
 
     # --- Selection du continent ---
     continents = ["All"] + sorted(athletes['continent'].dropna().unique())
@@ -343,3 +389,7 @@ if not medals.empty:
         )
         fig_medals.update_traces(marker_line_color="#F9B93A", marker_line_width=2)
         st.plotly_chart(fig_medals, use_container_width=True)
+    else:
+        st.info("No medal data available for ranking.")
+else:
+    st.info("The 'medals.csv' file is empty or missing.")
