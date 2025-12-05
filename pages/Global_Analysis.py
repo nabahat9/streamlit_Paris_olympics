@@ -38,6 +38,37 @@ def get_country_column(df: pd.DataFrame) -> str | None:
             return cand
     return None
 
+import pycountry_convert as pc
+import streamlit as st
+import pandas as pd
+
+@st.cache_data
+def country_to_continent(country_name: str) -> str:
+    """
+    Convert a country name to a human-readable continent name.
+    Falls back to 'Other' when conversion fails.
+    """
+    try:
+        # special case that often breaks pycountry-convert
+        if country_name == "Democratic Republic of the Congo":
+            country_name = "Congo, The Democratic Republic of the"
+
+        country_alpha2 = pc.country_name_to_country_alpha2(country_name)
+        continent_code = pc.country_alpha2_to_continent_code(country_alpha2)
+
+        continents_map = {
+            "AF": "Africa",
+            "NA": "North America",
+            "SA": "South America",
+            "AS": "Asia",
+            "EU": "Europe",
+            "OC": "Oceania",
+            "AN": "Antarctica",
+        }
+        return continents_map.get(continent_code, "Other")
+    except Exception:
+        return "Other"
+
 def get_medal_column(df: pd.DataFrame, medal_name: str):
     medal_name = medal_name.lower()
     for col in df.columns:
@@ -285,6 +316,18 @@ def load_data():
         return create_placeholder_data()
 
 athletes_df, events_df, medals_total_df, nocs_df, medalists_df = load_data()
+# --------------------------------------------------------------------
+# Ensure medals_total_df has a real 'continent' column using country_to_continent
+# --------------------------------------------------------------------
+country_col_in_medals = get_country_column(medals_total_df)  # e.g. 'country' or 'country_long'
+
+if country_col_in_medals:
+    medals_total_df["continent"] = medals_total_df[country_col_in_medals].apply(
+        country_to_continent
+    )
+else:
+    # fallback if no country name is available for some reason
+    medals_total_df["continent"] = "Other"
 
 # ------------------------------------------------
 # Sidebar – global filters
