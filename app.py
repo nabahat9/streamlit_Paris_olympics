@@ -31,6 +31,7 @@ render_navbar(current_page="overview")
 # ---------------------------
 # Data loading
 # ---------------------------
+# NOTE: Assuming load_data() function is defined in utils.py and works correctly.
 athletes_df, events_df, medals_total_df, nocs_df = load_data()
 
 # ---------------------------
@@ -44,7 +45,7 @@ if HERO_IMAGE_PATH.exists():
 else:
     HERO_IMAGE_URL = ""
 
-# Hero CSS specific to homepage
+# Hero CSS specific to homepage (Now includes black color for section titles)
 st.markdown(
     """
     <style>
@@ -91,6 +92,14 @@ st.markdown(
         align-items: flex-start;
         font-size: 0.9rem;
         gap: 0.5rem; 
+    }
+    
+    /* NEW: Set section title color to black */
+    .section-card .section-title { 
+        color: #000000 !important;
+    }
+    .section-card{
+        margin:30px
     }
     
     .hero-title {
@@ -205,11 +214,9 @@ if "event_id" in filtered_events.columns:
 else:
     total_events = len(filtered_events)
 
-delta_athletes = "+2.5%"
-delta_countries = "+1.2%"
-delta_sports = "0%"
-delta_medals = "+0.8%"
-delta_events = "+3.1%"
+# ---------------------------
+# REMOVED: Static delta variables have been deleted as requested.
+# ---------------------------
 
 # ---------------------------
 # Overview Dashboard Content
@@ -224,7 +231,7 @@ st.markdown("### 🏠 Overview Dashboard")
 
 st.markdown("""
     <div style="color: #64748b; font-size: 1.0rem; font-weight: 400; margin-bottom: 2rem;">
-        A high-level summary of the Olympic Games filtered by your selections.
+        A high-level summary of the Olympic Games .
     </div>
     """, unsafe_allow_html=True)
 
@@ -239,7 +246,6 @@ with kpi_cols[0]:
                 <span class="metric-icon">🏃‍♀️</span> Total Athletes
             </div>
             <p class="metric-value">{total_athletes:,}</p>
-            <p class="metric-delta">{delta_athletes}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -253,7 +259,6 @@ with kpi_cols[1]:
                 <span class="metric-icon">🌍</span> Total Countries
             </div>
             <p class="metric-value">{total_countries:,}</p>
-            <p class="metric-delta">{delta_countries}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -267,7 +272,6 @@ with kpi_cols[2]:
                 <span class="metric-icon">🎯</span> Total Sports
             </div>
             <p class="metric-value">{total_sports:,}</p>
-            <p class="metric-delta">{delta_sports}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -281,7 +285,6 @@ with kpi_cols[3]:
                 <span class="metric-icon">🥇</span> Total Medals
             </div>
             <p class="metric-value">{int(total_medals):,}</p>
-            <p class="metric-delta">{delta_medals}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -295,7 +298,6 @@ with kpi_cols[4]:
                 <span class="metric-icon">🏟️</span> Total Events
             </div>
             <p class="metric-value">{total_events:,}</p>
-            <p class="metric-delta">{delta_events}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -330,11 +332,16 @@ with left_col:
 
     if medal_data:
         medal_df = pd.DataFrame(medal_data, columns=["Medal", "Count"])
+        # Set specific colors for medals
+        color_map = {'Gold': '#FFD700', 'Silver': '#C0C0C0', 'Bronze': '#CD7F32'}
+        
         fig_pie = px.pie(
             medal_df,
             names="Medal",
             values="Count",
             hole=0.4,
+            color="Medal",
+            color_discrete_map=color_map # Use the custom color map
         )
         fig_pie.update_traces(textinfo="percent+label")
         fig_pie.update_layout(
@@ -398,7 +405,7 @@ with right_col:
             y="Country",
             orientation="h",
             color="total", 
-            color_continuous_scale=px.colors.sequential.Agsunset,
+            color_continuous_scale=px.colors.sequential.Teal,
         )
         fig_bar.update_layout(
             margin=dict(l=0, r=10, t=0, b=0),
